@@ -10,7 +10,7 @@ export type IUser = {
   password: string
   name: UserName
   address: string
-  phoneNumber: string
+  email: string
 }
 
 export type UserModel = Model<IUser, Record<string, unknown>>
