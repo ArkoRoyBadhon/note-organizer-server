@@ -8,7 +8,7 @@ import ApiError from '../../errors/ApiError'
 const authPermission = (...requiredRoles: string[]) => {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const token = req.headers.authorization
+      const token = req.cookies.accessToken
 
       if (!token) {
         throw new ApiError(httpStatus.UNAUTHORIZED, 'You are not authorized')

@@ -8,8 +8,8 @@ import { Secret } from 'jsonwebtoken'
 
 const createUser = async (payload: IUser): Promise<IUser> => {
   const existingUser = await User.findOne({
-    'name.firstName': payload.name.firstName,
-    'name.lastName': payload.name.lastName,
+    // 'name.firstName': payload.name.firstName,
+    // 'name.lastName': payload.name.lastName,
     email: payload?.email,
   })
 
@@ -17,7 +17,10 @@ const createUser = async (payload: IUser): Promise<IUser> => {
     throw new ApiError(httpStatus.NOT_ACCEPTABLE, 'User is already exists')
   }
 
-  const result = await User.create(payload)
+  const info = { ...payload, role: 'user' }
+  console.log(info)
+
+  const result = await User.create(info)
   return result
 }
 
@@ -42,8 +45,8 @@ const loginUser = async (payload: ILoginUser): Promise<ILoginUserResponse> => {
   }
 
   // create access token & refresh token
-  const { _id: Id, role } = isUserExist
-
+  const { _id: Id } = isUserExist
+  const role = 'user'
   const accessToken = jwtHelpers.createToken(
     { Id, role },
     config.jwt.secret as Secret,
@@ -51,7 +54,7 @@ const loginUser = async (payload: ILoginUser): Promise<ILoginUserResponse> => {
   )
 
   const refreshToken = jwtHelpers.createToken(
-    { Id, role },
+    { Id },
     config.jwt.refresh_secret as Secret,
     config.jwt.refresh_expires_in as string,
   )
@@ -62,7 +65,28 @@ const loginUser = async (payload: ILoginUser): Promise<ILoginUserResponse> => {
   }
 }
 
+const getLoggedUser = async (token: string) => {
+  let verifiedToken = null
+  try {
+    verifiedToken = jwtHelpers.verifyToken(token, config.jwt.secret as Secret)
+  } catch (error) {
+    throw new ApiError(httpStatus.FORBIDDEN, 'Invalid access Token')
+  }
+  const { Id } = verifiedToken
+
+  const isUserExist = await User.isUserExist(Id)
+
+  if (!isUserExist) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'User does not exist')
+  }
+
+  const result = await User.findOne({ _id: Id })
+
+  return result
+}
+
 export const UserService = {
   createUser,
   loginUser,
+  getLoggedUser,
 }

@@ -22,16 +22,18 @@ export type UserName = {
 export type IUser = {
   _id?: Types.ObjectId
   password: string
-  name: UserName
-  address: string
+  // name: UserName
+  name: string
+  // address: string
   email: string
   role: string
+  passwordConfirm: string
 }
 
 export type UserModel = {
   isUserExist(
-    phoneNumber: string,
-  ): Promise<Pick<IUser, '_id' | 'email' | 'role' | 'password'>>
+    email: string,
+  ): Promise<Pick<IUser, '_id' | 'email' | 'name' | 'password'>>
   isPasswordMatched(
     givenPassword: string,
     savedPassword: string,

@@ -20,17 +20,20 @@ const createUser = catchAsync(async (req: Request, res: Response) => {
 
 const loginUser = catchAsync(async (req: Request, res: Response) => {
   const { ...loginData } = req.body
-  console.log(loginData)
+  // console.log(loginData)
 
   const result = await UserService.loginUser(loginData)
-  const { refreshToken, ...others } = result
+  const { refreshToken, accessToken, ...others } = result
+
+  // console.log(result)
 
   const cookieOptions = {
-    secure: config.env === 'production',
+    secure: config.env === 'development',
     httpOnly: true,
   }
 
   res.cookie('refreshToken', refreshToken, cookieOptions)
+  res.cookie('accessToken', accessToken, cookieOptions)
 
   sendResponse(res, {
     statusCode: 200,
@@ -40,7 +43,41 @@ const loginUser = catchAsync(async (req: Request, res: Response) => {
   })
 })
 
+const LogOut = catchAsync(async (req: Request, res: Response) => {
+  const cookieOptions = {
+    secure: process.env.NODE_ENV === 'development',
+    httpOnly: true,
+    expires: new Date(0),
+  }
+
+  res.cookie('refreshToken', '', cookieOptions)
+  res.cookie('accessToken', '', cookieOptions)
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'User Logged out Successfully',
+  })
+})
+
+const getUser = catchAsync(async (req: Request, res: Response) => {
+  const authorizationHeader = req.cookies.accessToken
+
+  if (typeof authorizationHeader === 'string') {
+    const token = authorizationHeader.split(' ')[1] || authorizationHeader
+    const result = await UserService.getLoggedUser(token)
+    sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: 'User Created Successfully',
+      data: result,
+    })
+  }
+})
+
 export const UserController = {
   createUser,
   loginUser,
+  LogOut,
+  getUser,
 }
